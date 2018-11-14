@@ -8,13 +8,21 @@ import numpy as np
 
 #process csv file that we will use for project
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
+
+dataframe.loc[:,'CHROM'].replace('X',23, inplace=True)
+dataframe.loc[:,'CHROM'].replace('MT',24, inplace=True)
+
 row, _ = dataframe.shape
 info = [dataframe.iloc[i,:] for i in range(row)]
-final_data = np.array(info)
 
-#use fd_x and fd_y like we did with train_data and train_label
+#convert CSV dataframe into numpy array for easy data manipulation
+final_data = np.array(info)
 fd_x = np.delete(final_data, 18, 1)
 fd_y = final_data[:,18:19]
+
+#VALUES EXON AND INTRON COLUMNS CAN BE REDUCED TO 0/1
+#IF EXON IS NOT NULL, MAKE IT 1 AND MAKE INTRON 0
+#IF INTRON IS NOT NULL, MAKE IT 1 AND MAKE EXON 0
 
 """
 names will not be a 1-to-1 match because of
@@ -44,5 +52,5 @@ REFERENCE COLUMN NAMES - Y-VALUE
 """
 
 #perform dataset element access as you would with a 2-D array in Python
-first_row_tv_pair = fd_x[0,7]
-print(first_row_tv_pair)
+first_row_tv_pair = fd_x[:,0]
+print(type(first_row_tv_pair[0]))
