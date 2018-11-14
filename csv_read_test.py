@@ -9,11 +9,31 @@ import numpy as np
 #process csv file that we will use for project
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
 
+#fix chromosome 
 dataframe.loc[:,'CHROM'].replace('X',23, inplace=True)
 dataframe.loc[:,'CHROM'].replace('MT',24, inplace=True)
+dataframe.loc[:,'CHROM'] = pd.to_numeric(dataframe.loc[:,'CHROM'])
 
-row, _ = dataframe.shape
-info = [dataframe.iloc[i,:] for i in range(row)]
+#extract positions
+#get values from cDNA_pos, CDS_pos, protein_pos (A-B)
+#replace ? with np.NaN
+#adjust columns as float
+#for each field:
+    #startpos, nostoppos
+    #nostartpos, stoppos
+    #nostartpos, nostoppos
+    
+#log introns/exons
+#for columns EXON and INTRON
+    #change filled cells to int type
+    
+#mark unspecified CLNDN
+#options: notspecified, notspecified|notprovided, notprovided|notspecified, notprovided
+#perform disjunction (or function) and store in CLNDN
+
+#get exon pos and length
+
+info = [dataframe.iloc[i,:] for i in range(dataframe.shape[0])]
 
 #convert CSV dataframe into numpy array for easy data manipulation
 final_data = np.array(info)
@@ -50,7 +70,3 @@ REFERENCE COLUMN NAMES - Y-VALUE
     CLASS = fd_y <-THIS IS THE Y-VALUE, IMPORTANT
 
 """
-
-#perform dataset element access as you would with a 2-D array in Python
-first_row_tv_pair = fd_x[:,0]
-print(type(first_row_tv_pair[0]))
