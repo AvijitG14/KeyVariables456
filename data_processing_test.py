@@ -33,6 +33,7 @@ dataframe.loc[:,'CHROM'] = pd.to_numeric(dataframe.loc[:,'CHROM'])
 #print(dataframe.loc[:,'EXON'].str.split('/')[0][1])
 #print(dataframe.dtypes)
 
+#INTRODUCE NEW COLUMN
 #extract start positions for CDNA, CDS, and protein
 dataframe.loc[:,'cDNA_pos_start'] = dataframe.loc[:,'cDNA_position'].str.split('-').str.get(0)
 dataframe.loc[:,'CDS_pos_start'] = dataframe.loc[:,'CDS_position'].str.split('-').str.get(0)
@@ -64,12 +65,30 @@ fd_y = final_data[:,18:19]
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=0.7,
                                                     random_state=111, stratify=fd_y)
 
+if K.image_data_format() == 'channels_first':
+    train_data = train_data.reshape(train_data.shape[0], 1, 45631, 48)
+    test_data = test_data.reshape(test_data.shape[0], 1, 45631, 48)
+    input_shape = (1, 45631, 48)
+else:
+    train_data = train_data.reshape(train_data.shape[0], 45631, 48, 1)
+    test_data = test_data.reshape(test_data.shape[0], 45631, 48, 1)
+    input_shape = (45631, 48, 1)
+
 # convert class vectors to binary class matrices
+# ADDS NEW COLUMN
 train_label = keras.utils.to_categorical(train_label, num_classes=None)
 test_label = keras.utils.to_categorical(test_label, num_classes=None)
 
+print(train_data.shape)
+print(train_label.shape)
+print(test_data.shape)
+print(test_label.shape)
+
+#CHANNELS LAST
+print(input_shape)
+
 '''
-input_shape = (10,10,1)
+input_shape = (1,45631,48)
 
 #TEST CONVOLUTIONAL NEURAL NETWORK
 print('CNN TEST: 32 3x3 CONV -> 2x2 MAXPOOL -> softmax')
