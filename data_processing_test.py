@@ -7,7 +7,7 @@ import keras
 import time
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 import functools
 
@@ -61,44 +61,27 @@ final_data = np.array(info)
 fd_x = np.delete(final_data, 18, 1)
 fd_y = final_data[:,18:19]
 
-#split dataset into training and test data (former has roughly 45k rows while latter has roughly 20k rows)
+#split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=0.7,
                                                     random_state=111, stratify=fd_y)
 
-if K.image_data_format() == 'channels_first':
-    train_data = train_data.reshape(train_data.shape[0], 1, 45631, 48)
-    test_data = test_data.reshape(test_data.shape[0], 1, 45631, 48)
-    input_shape = (1, 45631, 48)
-else:
-    train_data = train_data.reshape(train_data.shape[0], 45631, 48, 1)
-    test_data = test_data.reshape(test_data.shape[0], 45631, 48, 1)
-    input_shape = (45631, 48, 1)
+#Expand dimensions of input data
+train_data = np.expand_dims(train_data, axis=2)
+test_data = np.expand_dims(test_data, axis=2)
 
 # convert class vectors to binary class matrices
-# ADDS NEW COLUMN
 train_label = keras.utils.to_categorical(train_label, num_classes=None)
 test_label = keras.utils.to_categorical(test_label, num_classes=None)
-
-print(train_data.shape)
-print(train_label.shape)
-print(test_data.shape)
-print(test_label.shape)
-
-#CHANNELS LAST
-print(input_shape)
-
-'''
-input_shape = (1,45631,48)
 
 #TEST CONVOLUTIONAL NEURAL NETWORK
 print('CNN TEST: 32 3x3 CONV -> 2x2 MAXPOOL -> softmax')
 model = Sequential()
-model.add(Conv2D(32, kernel_size=(3, 3),
-    activation='relu', input_shape=input_shape))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv1D(32, kernel_size=3,
+    activation='relu', input_shape=(48,1)))
+model.add(MaxPooling1D(pool_size=2))
 model.add(Dropout(0.25))
 model.add(Flatten())
-model.add(Dense(1, activation='softmax'))
+model.add(Dense(2, activation='softmax'))
 model.compile(loss=keras.losses.categorical_crossentropy,
               optimizer=keras.optimizers.Adadelta(),
               metrics=['accuracy'])
@@ -111,4 +94,3 @@ end_time = time.time()
 total_time = end_time - start_time
 print('Training time:',total_time)
 print('Test accuracy:', score[1])
-'''
