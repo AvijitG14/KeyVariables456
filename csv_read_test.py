@@ -67,11 +67,13 @@ NUMERIC FEATURES
     ALT = fd_x[:,3]
     AF_ESP = fd_x[:,4]
     AF_EXAC = fd_x[:,5]
+
     AF_TGP = fd_x[:,6]
     ALLELE = fd_x[:,18]
     EXON = fd_x[:,25]
     INTRON = fd_x[:,26]
     CDNA_POS = fd_x[:,27]
+
     CDS_POS = fd_x[:,28]
     PRO_POS = fd_x[:,29]
     LOF_TOOL = fd_x[:,41]
@@ -79,7 +81,7 @@ NUMERIC FEATURES
     CADD_RAW = fd_x[:,43]
 
 CATEGORICAL FEATURES
-    CHROM = fd_x[:,0]
+    CHROM = fd_x[:,0] (NOW TURNED INTO VALUES FROM 1-24)
     VAR_TYPE = fd_x[:,13]
     CNSQ = fd_x[:,19]
     IMPACT = fd_x[:,20]
