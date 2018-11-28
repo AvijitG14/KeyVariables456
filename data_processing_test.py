@@ -11,12 +11,26 @@ from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 import functools
 
-def disjunction(*values):
-    return functools.reduce(np.logical_or, values)
+def CategoryColumnChanges(dataframe):
+    return 0
+
+def StartEndPositions(dataframe):
+    return 0
+
+def FindAlleleLengths(dataframe):
+    return 0
+
+def ExonAndIntronProcessing(dataframe):
+    return 0
 
 #process csv file that we will use for project
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
 row, _ = dataframe.shape
+
+
+'''
+CATEGORICAL COLUMN CHANGES
+'''
 
 #fix chromosome (col 0)
 dataframe.loc[:,'CHROM'].replace('X', 23, inplace=True)
@@ -60,7 +74,11 @@ dataframe.loc[:,'PolyPhen'].replace('unknown', 4, inplace=True)
 dataframe.loc[:,'PolyPhen'] = pd.to_numeric(dataframe.loc[:,'PolyPhen'])
 
 
-#extract start positions for CDNA, CDS, and protein (cols 25-27)
+'''
+CREATE COLUMNS FOR START AND END POSITIONS
+'''
+
+#extract start positions for CDNA, CDS, and protein (cols )
 dataframe.loc[:,'cDNA_pos_start'] = dataframe.loc[:,'cDNA_position'].str.split('-').str.get(0)
 dataframe.loc[:,'CDS_pos_start'] = dataframe.loc[:,'CDS_position'].str.split('-').str.get(0)
 dataframe.loc[:,'Protein_pos_start'] = dataframe.loc[:,'Protein_position'].str.split('-').str.get(0)
@@ -76,8 +94,7 @@ dataframe.loc[:,'CDS_pos_start'] = pd.to_numeric(dataframe.loc[:,'CDS_pos_start'
 dataframe.loc[:,'Protein_pos_start'] = pd.to_numeric(dataframe.loc[:,'Protein_pos_start'])
 
 
-
-#extract end positions for CDNA, CDS, and protein (cols 28-30)
+#extract end positions for CDNA, CDS, and protein (cols )
 dataframe.loc[:,'cDNA_pos_end'] = dataframe.loc[:,'cDNA_position'].str.split('-').str.get(1)
 dataframe.loc[:,'CDS_pos_end'] = dataframe.loc[:,'CDS_position'].str.split('-').str.get(1)
 dataframe.loc[:,'Protein_pos_end'] = dataframe.loc[:,'Protein_position'].str.split('-').str.get(1)
@@ -93,11 +110,24 @@ dataframe.loc[:,'CDS_pos_end'] = pd.to_numeric(dataframe.loc[:,'CDS_pos_end'])
 dataframe.loc[:,'Protein_pos_end'] = pd.to_numeric(dataframe.loc[:,'Protein_pos_end'])
 
 
+'''
+FIND REF, ALT, ALLELE LENGTHS
+'''
+
+#extract lengths for REF, ALT, Allele (cols )
+dataframe.loc[:,'REF_len'] = dataframe.loc[:,'REF'].str.len()
+dataframe.loc[:,'ALT_len'] = dataframe.loc[:,'ALT'].str.len()
+dataframe.loc[:,'Allele_len'] = dataframe.loc[:,'Allele'].str.len()
+
+dataframe.loc[:,'REF_len'] = pd.to_numeric(dataframe.loc[:,'REF_len'])
+dataframe.loc[:,'ALT_len'] = pd.to_numeric(dataframe.loc[:,'ALT_len'])
+dataframe.loc[:,'Allele_len'] = pd.to_numeric(dataframe.loc[:,'Allele_len'])
+
 #delete columns containing miscellaneous or redundantinformation 
 dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGINCL',
     'CLNVI','MC','ORIGIN','SSR','SYMBOL','Feature_type','Feature','BIOTYPE','Amino_acids',
     'Codons','DISTANCE','MOTIF_NAME','MOTIF_POS','HIGH_INF_POS','MOTIF_SCORE_CHANGE',
-    'cDNA_position','CDS_position','Protein_position'],axis=1,inplace=True)
+    'cDNA_position','CDS_position','Protein_position','REF','ALT','Allele'],axis=1,inplace=True)
 
 print(dataframe.dtypes)
     
@@ -105,8 +135,8 @@ info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
 
 #split dataset into x-value matrix and y-value array
-fd_x = np.delete(final_data, 8, 1)
-fd_y = final_data[:,8:9]
+fd_x = np.delete(final_data, 6, 1)
+fd_y = final_data[:,6:7]
 
 #split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=0.7,
@@ -120,30 +150,14 @@ test_data = np.expand_dims(test_data, axis=2)
 train_label = keras.utils.to_categorical(train_label, num_classes=None)
 test_label = keras.utils.to_categorical(test_label, num_classes=None)
 
-#TODO: numeric (leave as values, DISCRETE)
+print(train_data.shape)
+print(train_label.shape)
+
 '''
-print(train_data[10:14,2]) #CHANGE TO VALUE (use ascii) REF
-print(train_data[10:14,3]) #CHANGE TO VALUE (use ascii) ALT
-print(train_data[10:14,8]) #CHANGE TO VALUE (use ascii) Allele
+TODO: numeric (leave as values, DISCRETE)
 print(train_data[10:14,9]) #Consequence
 print(train_data[10:14,11]) #CHANGE TO VALUE (take numerator and denominator - use '/' to split) EXON
 print(train_data[10:14,12]) #CHANGE TO VALUE (take numerator and denominator - use '/' to split) INTRON
-'''
-print(train_data[10:14,24]) #CHANGE TO VALUE (simple change from string to int) cDNA_position
-print(train_data[10:14,25]) #CHANGE TO VALUE (simple change from string to int) CDS_position
-print(train_data[10:14,26]) #CHANGE TO VALUE (simple change from string to int) Protein_position
-print(train_data[10:14,27]) #CHANGE TO VALUE (simple change from string to int) cDNA_position
-print(train_data[10:14,28]) #CHANGE TO VALUE (simple change from string to int) CDS_position
-print(train_data[10:14,29]) #CHANGE TO VALUE (simple change from string to int) Protein_position
-
-'''
-#TODO: categorical (CHANGE INTO VALUES, CONTINUOUS) strand, blosum62, and chrom are pre-handled
-print(train_data[20:24,13]) #single_nucleotide_variant, Duplication, Deletion, Indel, Inversion, Insertion, Microsatellite
-print(train_data[20:24,19]) #missense_variant, synonymous_variant, 3_prime_UTR_variant, 5_prime_UTR_variant
-print(train_data[20:24,20]) #MODERATE, LOW, MODIFIER, HIGH
-print(train_data[20:24,34]) #OK, FAILED
-print(train_data[20:24,35]) #deleterious, tolerated, deleterious_low_confidence, tolerated_low_confidence
-print(train_data[20:24,36]) #benign, probably damaging, possibly_damaging, unknown
 '''
 
 
