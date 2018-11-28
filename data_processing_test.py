@@ -10,6 +10,7 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 import functools
+import torch
 
 def DataframeAnd(*conditions):
     return functools.reduce(np.logical_and, conditions)
@@ -166,13 +167,11 @@ test_label = keras.utils.to_categorical(test_label, num_classes=None)
 print(train_data.shape)
 print(train_label.shape)
 
-'''
-TODO: numeric (leave as values, DISCRETE)
-print(train_data[10:14,9]) #Consequence
-print(train_data[10:14,11]) #CHANGE TO VALUE (take numerator and denominator - use '/' to split) EXON
-print(train_data[10:14,12]) #CHANGE TO VALUE (take numerator and denominator - use '/' to split) INTRON
-'''
+#x = torch.Tensor(2,3)
+#print(x)
 
+#TODO: numeric (leave as values, DISCRETE)
+#print(train_data[10:14,9]) #Consequence
 
 '''
 #Build and compile the CNN model

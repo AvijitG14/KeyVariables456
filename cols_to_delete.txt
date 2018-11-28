@@ -1,4 +1,4 @@
-POTENTIAL DATASET COLUMNS TO DELETE
+POTENTIAL MISCELLANEOUS DATASET COLUMNS TO DELETE
 
 TOTAL COL COUNT: 21
 
@@ -22,27 +22,4 @@ DISTANCE - between variant to transcript (COL 32)
 MOTIF_NAME - source and identifier of transcription factor (COL 37)
 MOTIF_POS = relative position (COL 38)
 HIGH_INF_POS = if variant has high inf pos (COL 39)
-MOTIF_SCORE = difference in score between ref and var sequences (COL 40)  
-
-THE FOLLOWING ARE MY NAMES FOR EACH COLUMN:
-    TAG_VAL = fd_x[:,7]
-    TAG_VAL_VAR = fd_x[:,8]
-    DIS_NAME = fd_x[:,9]
-    DIS_NAME_VAR = fd_x[:,10]
-    HGVS = fd_x[:,11]
-    CLNSIG = fd_x[:,12]
-    CLNSRC = fd_x[:,14]
-    MC = fd_x[:,15]
-    ORGN = fd_x[:,16]
-    SSR = fd_x[:,17]                     
-    SYMBOL = fd_x[:,21]
-    FEAT_TYPE = fd_x[:,22]
-    FEAT = fd_x[:,23]
-    BIOTYPE = fd_x[:,24]      
-    AMINO = fd_x[:,30]
-    CODONS = fd_x[:,31]
-    DST = fd_x[:,32]
-    MOTIF_NAME = fd_x[:,37]
-    MOTIF_POS = fd_x[:,38]
-    HI_INF_POS = fd_x[:,39]
-    MOTIF_SCORE = fd_x[:,40]     
+MOTIF_SCORE = difference in score between ref and var sequences (COL 40)   
