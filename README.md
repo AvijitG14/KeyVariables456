@@ -16,8 +16,6 @@ Mark Tan
 
 Logistic Regression
 
-Gradient Tree Boosting
-
 Support Vector Machine
 
 Convolution Neural Networking

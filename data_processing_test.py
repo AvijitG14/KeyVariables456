@@ -11,9 +11,72 @@ from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 import functools
 import torch
+from torch.autograd import Variable
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net,self).__init__()
+        self.fc1 = nn.Linear(28, 15)
+        self.fc2 = nn.Linear(15, 15)
+        self.fc3 = nn.Linear(15, 2)
+
+def forward(self, x):
+    x = F.relu(self.fc1(x))
+    x = F.relu(self.fc2(x))
+    x = self.fc3(x)
+    return F.log_softmax(x)
+
 
 def DataframeAnd(*conditions):
     return functools.reduce(np.logical_and, conditions)
+
+def ConsequenceRows(df, row_name):
+    df.loc[:,row_name].replace('missense_variant',1,inplace=True)
+    df.loc[:,row_name].replace('synonymous_variant',2,inplace=True)
+    df.loc[:,row_name].replace('splice_acceptor_variant',3,inplace=True)
+    df.loc[:,row_name].replace('splice_donor_variant',4,inplace=True)
+    df.loc[:,row_name].replace('stop_gained',5,inplace=True)
+    df.loc[:,row_name].replace('frameshift_variant',6,inplace=True)
+    df.loc[:,row_name].replace('stop_lost',7,inplace=True)
+    df.loc[:,row_name].replace('inframe_insertion',8,inplace=True)
+    df.loc[:,row_name].replace('inframe_deletion',9,inplace=True)
+    df.loc[:,row_name].replace('protein_altering_variant',10,inplace=True)
+    df.loc[:,row_name].replace('splice_region_variant',11,inplace=True)
+    df.loc[:,row_name].replace('start_retained_variant',12,inplace=True)
+    df.loc[:,row_name].replace('stop_retained_variant',13,inplace=True)
+    df.loc[:,row_name].replace('coding_sequence_variant',14,inplace=True)
+    df.loc[:,row_name].replace('5_prime_UTR_variant',15,inplace=True)
+    df.loc[:,row_name].replace('3_prime_UTR_variant',16,inplace=True)
+    df.loc[:,row_name].replace('intron_variant',17,inplace=True)
+    df.loc[:,row_name].replace('non_coding_transcript_variant',18,inplace=True)
+    df.loc[:,row_name].replace('upstream_gene_variant',19,inplace=True)
+    df.loc[:,row_name].replace('downstream_gene_variant',20,inplace=True)
+    df.loc[:,row_name].replace('TF_binding_site_variant',21,inplace=True)
+    df.loc[:,row_name].replace('intergenic_variant',22,inplace=True)
+
+    return df
+
+def ConsequenceValues(df):
+    #create two consequence columns to support a row having multiple entries
+    df.loc[:,'Cons_one'] = df.loc[:,'Consequence'].str.split('&').str.get(0)
+    df.loc[:,'Cons_two'] = df.loc[:,'Consequence'].str.split('&').str.get(1)
+        
+    #change all consequence types to numbers
+    df = ConsequenceRows(df, 'Cons_one')
+    df = ConsequenceRows(df, 'Cons_two')
+
+    #replace ? with null values in both columns
+    df.loc[:,'Cons_one'].replace('?',np.NaN,inplace=True)
+    df.loc[:,'Cons_two'].replace('?',np.NaN,inplace=True)    
+    
+    #convert consequence entries into floats
+    df.loc[:,'Cons_one'] = pd.to_numeric(df.loc[:,'Cons_one'])
+    df.loc[:,'Cons_two'] = pd.to_numeric(df.loc[:,'Cons_two'])
+    
+    return df
 
 def CategoryColumnChanges(df):
     #fix chromosome (col 0)
@@ -135,16 +198,19 @@ dataframe = CategoryColumnChanges(dataframe)
 dataframe = StartEndPositions(dataframe)
 dataframe = FindAlleleLengths(dataframe)
 dataframe = ExonIntronProcessing(dataframe)
+dataframe = ConsequenceValues(dataframe)
 
-#delete columns containing miscellaneous or redundantinformation 
+#delete columns containing miscellaneous or redundant information 
 dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGINCL',
     'CLNVI','MC','ORIGIN','SSR','SYMBOL','Feature_type','Feature','BIOTYPE','Amino_acids',
     'Codons','DISTANCE','MOTIF_NAME','MOTIF_POS','HIGH_INF_POS','MOTIF_SCORE_CHANGE',
-    'cDNA_position','CDS_position','Protein_position','REF','ALT','Allele','EXON','INTRON'],
+    'cDNA_position','CDS_position','Protein_position','REF','ALT','Allele','EXON','INTRON',
+    'Consequence'],
     axis=1,inplace=True)
+  
+print(dataframe.loc[:,'Cons_one'])
+print(dataframe.loc[:,'Cons_two'])
 
-print(dataframe.dtypes)
-    
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
 
@@ -167,19 +233,54 @@ test_label = keras.utils.to_categorical(test_label, num_classes=None)
 print(train_data.shape)
 print(train_label.shape)
 
-#x = torch.Tensor(2,3)
-#print(x)
+'''
 
-#TODO: numeric (leave as values, DISCRETE)
-#print(train_data[10:14,9]) #Consequence
+#create neural netowrk, SGD, and loss function
+net = Net()
+optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+criterion = nn.NLLLoss()
+
+epochs = 5
+
+tensor_tr_d = torch.from_numpy(train_data)
+tensor_tr_l = torch.from_numpy(train_label)
+tensor_te_d = torch.from_numpy(test_data)
+tensor_te_l = torch.from_numpy(test_label)
+
+#train the data
+for i in range(epochs):
+    for j in range(train_data.shape[0]):
+        tensor_tr_d, tensor_tr_l = Variable(tensor_tr_d), Variable(tensor_tr_l)
+        tensor_tr_d = tensor_tr_d.view(-1, 28)
+        optimizer.zero_grad()
+        net_out = net(tensor_tr_d)
+        loss = criterion(net_out, tensor_tr_l)
+        loss.backward()
+        optimizer.step()
+ 
+test_loss = 0
+correct = 0       
+#test the data
+for k in range(test_data.shape[0]):
+    tensor_te_d, test_label = Variable(tensor_te_d,volatile=True), Variable(tensor_te_l)
+    tensor_te_d = tensor_te_d.view(-1, 28)
+    net_out = net(tensor_te_d)
+    test_loss += criterion(net_out, tensor_te_l).data[0]
+    prediction = net_out.data.max(1)[1]
+    correct += prediction.eq(tensor_te_l.data).sum()
+
+
+test_loss /= test_data.shape[0]
+print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(test_loss,
+      correct, len(test_data.shape[0]), 100. * correct / len(test_data.shape[0])))
+'''
 
 '''
 #Build and compile the CNN model
-print('CNN TEST: 32 3x3 CONV -> 2x2 MAXPOOL -> softmax')
+print('CNN TEST: 64 3x3 CONV -> 2x2 MAXPOOL -> softmax')
 model = Sequential()
-model.add(Conv1D(32, kernel_size=3,
-    activation='relu', input_shape=(48,1)))
-model.add(MaxPooling1D(pool_size=2))
+model.add(Conv1D(64, kernel_size=3,
+    activation='relu', input_shape=(28,1)))
 model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(2, activation='softmax'))
@@ -190,10 +291,13 @@ model.compile(loss=keras.losses.categorical_crossentropy,
 #Test the CNN model and display the run statistics
 start_time = time.time()
 model.fit(train_data, train_label, batch_size=128,
-          epochs=1, verbose=1, validation_data=(test_data, test_label))
+          epochs=6, verbose=1, validation_data=(test_data, test_label))
 score = model.evaluate(test_data, test_label, verbose=0)
 end_time = time.time()
 total_time = end_time - start_time
 print('Training time:',total_time)
 print('Test accuracy:', score[1])
+
+#current test accuracy without consq = 74.79%
+#regardless of epoch size or convolution layers
 '''
