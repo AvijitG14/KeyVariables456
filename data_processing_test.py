@@ -56,6 +56,7 @@ def ConsequenceRows(df, row_name):
     df.loc[:,row_name].replace('downstream_gene_variant',20,inplace=True)
     df.loc[:,row_name].replace('TF_binding_site_variant',21,inplace=True)
     df.loc[:,row_name].replace('intergenic_variant',22,inplace=True)
+    df.loc[:,row_name].replace('start_lost',23,inplace=True)
 
     return df
 
@@ -68,9 +69,9 @@ def ConsequenceValues(df):
     df = ConsequenceRows(df, 'Cons_one')
     df = ConsequenceRows(df, 'Cons_two')
 
-    #replace ? with null values in both columns
+    #replace ? with null values in columns
     df.loc[:,'Cons_one'].replace('?',np.NaN,inplace=True)
-    df.loc[:,'Cons_two'].replace('?',np.NaN,inplace=True)    
+    df.loc[:,'Cons_two'].replace('?',np.NaN,inplace=True)
     
     #convert consequence entries into floats
     df.loc[:,'Cons_one'] = pd.to_numeric(df.loc[:,'Cons_one'])
@@ -200,6 +201,7 @@ dataframe = FindAlleleLengths(dataframe)
 dataframe = ExonIntronProcessing(dataframe)
 dataframe = ConsequenceValues(dataframe)
 
+print(dataframe.loc[:,'Cons_two'])
 #delete columns containing miscellaneous or redundant information 
 dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGINCL',
     'CLNVI','MC','ORIGIN','SSR','SYMBOL','Feature_type','Feature','BIOTYPE','Amino_acids',
@@ -208,8 +210,7 @@ dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGI
     'Consequence'],
     axis=1,inplace=True)
   
-print(dataframe.loc[:,'Cons_one'])
-print(dataframe.loc[:,'Cons_two'])
+#pd.set_option('display.max_rows', None)  # or 1000
 
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
@@ -230,57 +231,12 @@ test_data = np.expand_dims(test_data, axis=2)
 train_label = keras.utils.to_categorical(train_label, num_classes=None)
 test_label = keras.utils.to_categorical(test_label, num_classes=None)
 
-print(train_data.shape)
-print(train_label.shape)
-
-'''
-
-#create neural netowrk, SGD, and loss function
-net = Net()
-optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
-criterion = nn.NLLLoss()
-
-epochs = 5
-
-tensor_tr_d = torch.from_numpy(train_data)
-tensor_tr_l = torch.from_numpy(train_label)
-tensor_te_d = torch.from_numpy(test_data)
-tensor_te_l = torch.from_numpy(test_label)
-
-#train the data
-for i in range(epochs):
-    for j in range(train_data.shape[0]):
-        tensor_tr_d, tensor_tr_l = Variable(tensor_tr_d), Variable(tensor_tr_l)
-        tensor_tr_d = tensor_tr_d.view(-1, 28)
-        optimizer.zero_grad()
-        net_out = net(tensor_tr_d)
-        loss = criterion(net_out, tensor_tr_l)
-        loss.backward()
-        optimizer.step()
- 
-test_loss = 0
-correct = 0       
-#test the data
-for k in range(test_data.shape[0]):
-    tensor_te_d, test_label = Variable(tensor_te_d,volatile=True), Variable(tensor_te_l)
-    tensor_te_d = tensor_te_d.view(-1, 28)
-    net_out = net(tensor_te_d)
-    test_loss += criterion(net_out, tensor_te_l).data[0]
-    prediction = net_out.data.max(1)[1]
-    correct += prediction.eq(tensor_te_l.data).sum()
-
-
-test_loss /= test_data.shape[0]
-print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(test_loss,
-      correct, len(test_data.shape[0]), 100. * correct / len(test_data.shape[0])))
-'''
-
 '''
 #Build and compile the CNN model
 print('CNN TEST: 64 3x3 CONV -> 2x2 MAXPOOL -> softmax')
 model = Sequential()
-model.add(Conv1D(64, kernel_size=3,
-    activation='relu', input_shape=(28,1)))
+model.add(Conv1D(64, kernel_size=4,
+    activation='relu', input_shape=(train_data.shape[1],1)))
 model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(2, activation='softmax'))
