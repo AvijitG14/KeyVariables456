@@ -189,8 +189,7 @@ dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGI
     axis=1,inplace=True)
 
 dataframe.fillna(0,inplace=True)
-print(dataframe)
-'''
+
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
 
@@ -238,4 +237,3 @@ print('Test accuracy:', score[1])
 for layer in model.layers:
     w = layer.get_weights()
     print(w)
-'''
