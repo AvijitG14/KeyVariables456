@@ -10,24 +10,6 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 import functools
-import torch
-from torch.autograd import Variable
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net,self).__init__()
-        self.fc1 = nn.Linear(28, 15)
-        self.fc2 = nn.Linear(15, 15)
-        self.fc3 = nn.Linear(15, 2)
-
-def forward(self, x):
-    x = F.relu(self.fc1(x))
-    x = F.relu(self.fc2(x))
-    x = self.fc3(x)
-    return F.log_softmax(x)
 
 
 def DataframeAnd(*conditions):
@@ -69,10 +51,6 @@ def ConsequenceValues(df):
     df = ConsequenceRows(df, 'Cons_one')
     df = ConsequenceRows(df, 'Cons_two')
 
-    #replace ? with null values in columns
-    df.loc[:,'Cons_one'].replace('?',np.NaN,inplace=True)
-    df.loc[:,'Cons_two'].replace('?',np.NaN,inplace=True)
-    
     #convert consequence entries into floats
     df.loc[:,'Cons_one'] = pd.to_numeric(df.loc[:,'Cons_one'])
     df.loc[:,'Cons_two'] = pd.to_numeric(df.loc[:,'Cons_two'])
@@ -195,13 +173,13 @@ def ExonIntronProcessing(df):
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
 row, _ = dataframe.shape
 
+#simplify various data columns
 dataframe = CategoryColumnChanges(dataframe)
 dataframe = StartEndPositions(dataframe)
 dataframe = FindAlleleLengths(dataframe)
 dataframe = ExonIntronProcessing(dataframe)
 dataframe = ConsequenceValues(dataframe)
 
-print(dataframe.loc[:,'Cons_two'])
 #delete columns containing miscellaneous or redundant information 
 dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGINCL',
     'CLNVI','MC','ORIGIN','SSR','SYMBOL','Feature_type','Feature','BIOTYPE','Amino_acids',
@@ -209,9 +187,10 @@ dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGI
     'cDNA_position','CDS_position','Protein_position','REF','ALT','Allele','EXON','INTRON',
     'Consequence'],
     axis=1,inplace=True)
-  
-#pd.set_option('display.max_rows', None)  # or 1000
 
+dataframe.fillna(0,inplace=True)
+print(dataframe)
+'''
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
 
@@ -220,23 +199,25 @@ fd_x = np.delete(final_data, 6, 1)
 fd_y = final_data[:,6:7]
 
 #split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
-train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=0.7,
-                                                    random_state=111, stratify=fd_y)
+train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=45000,
+                                                    random_state=None, stratify=fd_y)
 
 #Expand dimensions of input data
 train_data = np.expand_dims(train_data, axis=2)
 test_data = np.expand_dims(test_data, axis=2)
 
 # convert class vectors to binary class matrices
-train_label = keras.utils.to_categorical(train_label, num_classes=None)
-test_label = keras.utils.to_categorical(test_label, num_classes=None)
+train_label = keras.utils.to_categorical(train_label, 2)
+test_label = keras.utils.to_categorical(test_label, 2)
 
-'''
+
 #Build and compile the CNN model
-print('CNN TEST: 64 3x3 CONV -> 2x2 MAXPOOL -> softmax')
+#current test accuracy without consq = 74.79%
+#regardless of epoch size or convolution layers
+print('CNN TEST: 32 2-length CONV -> softmax')
 model = Sequential()
-model.add(Conv1D(64, kernel_size=4,
-    activation='relu', input_shape=(train_data.shape[1],1)))
+model.add(Conv1D(8, kernel_size=2,
+    activation='sigmoid', input_shape=(train_data.shape[1],1)))
 model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(2, activation='softmax'))
@@ -246,7 +227,7 @@ model.compile(loss=keras.losses.categorical_crossentropy,
 
 #Test the CNN model and display the run statistics
 start_time = time.time()
-model.fit(train_data, train_label, batch_size=128,
+model.fit(train_data, train_label, batch_size=32,
           epochs=6, verbose=1, validation_data=(test_data, test_label))
 score = model.evaluate(test_data, test_label, verbose=0)
 end_time = time.time()
@@ -254,6 +235,7 @@ total_time = end_time - start_time
 print('Training time:',total_time)
 print('Test accuracy:', score[1])
 
-#current test accuracy without consq = 74.79%
-#regardless of epoch size or convolution layers
+for layer in model.layers:
+    w = layer.get_weights()
+    print(w)
 '''
