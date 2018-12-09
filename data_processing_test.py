@@ -9,6 +9,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
+from sklearn import svm
 import functools
 
 
@@ -200,6 +201,18 @@ fd_y = final_data[:,6:7]
 #split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=45000,
                                                     random_state=None, stratify=fd_y)
+#Create the SVM model
+print('Build SVM')
+model = svm.SVC(kernel='linear', C=1, gamma=1,verbose=True)
+print('training SVM...') 
+model.fit(train_data, train_label.ravel())
+print('finding the maximum margin')
+model.decision_function(train_data)
+#model.get_params(deep=TRUE)
+model.score(train_data, train_label)
+
+predictions = model.predict(test_data)
+print('done')
 
 #Expand dimensions of input data
 train_data = np.expand_dims(train_data, axis=2)
