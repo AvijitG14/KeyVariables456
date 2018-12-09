@@ -205,7 +205,7 @@ train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, tr
 #Create the SVM model
 print('Build SVM')
 #model = svm.SVC(kernel='linear', C=1, gamma=1,verbose=True)
-model = svm.LinearSVC(loss='hinge', tol=1e-5, max_iter=15000)
+model = svm.LinearSVC(loss='hinge', tol=1e-5, max_iter=5000)
 
 print('training SVM...') 
 start_time = time.time()
@@ -222,7 +222,6 @@ print('done')
 print('Training time:',total_time)
 
 predictions = model.predict(test_data)
-
 
 #Expand dimensions of input data
 train_data = np.expand_dims(train_data, axis=2)
