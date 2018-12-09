@@ -201,18 +201,28 @@ fd_y = final_data[:,6:7]
 #split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=45000,
                                                     random_state=None, stratify=fd_y)
+
 #Create the SVM model
 print('Build SVM')
-model = svm.SVC(kernel='linear', C=1, gamma=1,verbose=True)
+#model = svm.SVC(kernel='linear', C=1, gamma=1,verbose=True)
+model = svm.LinearSVC(loss='hinge', tol=1e-5, max_iter=15000)
+
 print('training SVM...') 
+start_time = time.time()
 model.fit(train_data, train_label.ravel())
 print('finding the maximum margin')
 model.decision_function(train_data)
+end_time = time.time()
+
 #model.get_params(deep=TRUE)
-model.score(train_data, train_label)
+print(model.score(train_data, train_label))
+
+total_time = end_time - start_time
+print('done')
+print('Training time:',total_time)
 
 predictions = model.predict(test_data)
-print('done')
+
 
 #Expand dimensions of input data
 train_data = np.expand_dims(train_data, axis=2)
