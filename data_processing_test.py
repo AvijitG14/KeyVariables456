@@ -213,13 +213,12 @@ model.fit(train_data, train_label.ravel())
 print('finding the maximum margin')
 model.decision_function(train_data)
 end_time = time.time()
-
 #model.get_params(deep=TRUE)
-print(model.score(train_data, train_label))
 
 total_time = end_time - start_time
 print('done')
 print('Training time:',total_time)
+print('Test accuracy', model.score(train_data, train_label))
 
 predictions = model.predict(test_data)
 
@@ -235,7 +234,7 @@ test_label = keras.utils.to_categorical(test_label, 2)
 #Build and compile the CNN model
 #current test accuracy without consq = 74.79%
 #regardless of epoch size or convolution layers
-print('CNN TEST: 32 2-length CONV -> softmax')
+print('CNN TEST: 8 2-length CONV -> softmax')
 model = Sequential()
 model.add(Conv1D(8, kernel_size=2,
     activation='sigmoid', input_shape=(train_data.shape[1],1)))
