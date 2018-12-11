@@ -201,11 +201,11 @@ fd_y = final_data[:,6:7]
 #split dataset into training and test data (former will have ~45k rows while latter will have ~20k rows)
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=45000,
                                                     random_state=None, stratify=fd_y)
-
+'''
 #Create the SVM model
 print('Build SVM')
 #model = svm.SVC(kernel='linear', C=1, gamma=1,verbose=True)
-model = svm.LinearSVC(loss='hinge', tol=1e-5, max_iter=5000)
+model = svm.LinearSVC(loss='hinge', tol=1e-5, max_iter=2500)
 
 print('training SVM...') 
 start_time = time.time()
@@ -221,6 +221,8 @@ print('Training time:',total_time)
 print('Test accuracy', model.score(train_data, train_label))
 
 predictions = model.predict(test_data)
+'''
+
 
 #Expand dimensions of input data
 train_data = np.expand_dims(train_data, axis=2)
@@ -234,10 +236,10 @@ test_label = keras.utils.to_categorical(test_label, 2)
 #Build and compile the CNN model
 #current test accuracy without consq = 74.79%
 #regardless of epoch size or convolution layers
-print('CNN TEST: 8 2-length CONV -> softmax')
 model = Sequential()
-model.add(Conv1D(8, kernel_size=2,
-    activation='sigmoid', input_shape=(train_data.shape[1],1)))
+model.add(Conv1D(16, kernel_size=3,
+    activation='relu', input_shape=(train_data.shape[1],1)))
+#model.add(MaxPooling1D(pool_size=2))
 model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(2, activation='softmax'))
@@ -254,7 +256,3 @@ end_time = time.time()
 total_time = end_time - start_time
 print('Training time:',total_time)
 print('Test accuracy:', score[1])
-
-for layer in model.layers:
-    w = layer.get_weights()
-    print(w)

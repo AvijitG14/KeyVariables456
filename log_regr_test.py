@@ -225,9 +225,10 @@ for i in range(45000):
         testing[i][j]= train_data[i][j][0]
 '''
 
-model = LogisticRegression(random_state=0,solver='liblinear').fit(fd_x,fd_y.ravel())
+model = LogisticRegression(random_state=0,solver='liblinear').fit(train_data,train_label.ravel())
 
-print(model.score(fd_x,fd_y))
+print('Train accuracy: ',model.score(train_data,train_label))
+print('Test Accuracy: ',model.score(test_data,test_label))
 
 '''
 m = 45000
