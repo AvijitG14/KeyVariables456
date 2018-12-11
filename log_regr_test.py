@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import *
 from sklearn.cross_validation import train_test_split #for sklearn 0.20, grab from sklearn.model_selection
+from sklearn.linear_model import LogisticRegression
 import keras
 import time
 from keras.models import Sequential, load_model
@@ -202,12 +203,12 @@ train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, tr
                                                     random_state=None, stratify=fd_y)
 
 #Expand dimensions of input data
-train_data = np.expand_dims(train_data, axis=2)
-test_data = np.expand_dims(test_data, axis=2)
+#train_data = np.expand_dims(train_data, axis=2)
+#test_data = np.expand_dims(test_data, axis=2)
 
 # convert class vectors to binary class matrices
-train_label = keras.utils.to_categorical(train_label, 2)
-test_label = keras.utils.to_categorical(test_label, 2)
+#train_label_new = keras.utils.to_categorical(train_label, 2)
+#test_label_new = keras.utils.to_categorical(test_label, 2)
 
 def sigmoid(x):
     return (1/(1+np.exp(-x)))
@@ -222,6 +223,12 @@ for i in range(45000):
     j=0
     for j in range(30):
         testing[i][j]= train_data[i][j][0]
+'''
+
+model = LogisticRegression(random_state=0,solver='liblinear').fit(fd_x,fd_y.ravel())
+
+print(model.score(fd_x,fd_y))
+
 '''
 m = 45000
 alpha= 0.0001
@@ -247,13 +254,13 @@ x_4 = x_4.reshape(45000,1)
 #print(theta_1)
 #print(train_data[0][0])
 #print(test_label)
-train_label = train_label[:,0]
+#train_label = train_label[:,0]
 
 epochs = 0
 cost_funct = []
-while(epochs < 1000):
+while(epochs < 10):
     y = theta_0 + theta_1 * x_1 + theta_2 * x_2 + theta_3 * x_3 + theta_4 * x_4
-    #print(y)
+    print(y)
     y = sigmoid(y)
 
     cost = (- np.dot(np.transpose(train_label),np.log(y)) - np.dot(np.transpose(1-train_label),np.log(1-y)))/m    
@@ -270,7 +277,7 @@ while(epochs < 1000):
     cost_funct.append(cost)
     epochs += 1
 print(cost_funct)
-
+'''
 
 '''
 #Build and compile the CNN model
