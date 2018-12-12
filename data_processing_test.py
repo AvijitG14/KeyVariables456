@@ -170,6 +170,15 @@ def ExonIntronProcessing(df):
     
     return df
 
+#normalize all the columns in the dataframe
+def normalize(df):
+    result = df.copy()
+    for feature_name in df.columns:
+        max_value = df[feature_name].max()
+        min_value = df[feature_name].min()
+        result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
+    return result
+
 #process csv file that we will use for project
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
 row, _ = dataframe.shape
@@ -190,6 +199,8 @@ dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGI
     axis=1,inplace=True)
 
 dataframe.fillna(0,inplace=True)
+#normalize the data frame
+dataframe = normalize(dataframe)
 
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
