@@ -10,6 +10,7 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 import functools
 
 
@@ -267,3 +268,10 @@ end_time = time.time()
 total_time = end_time - start_time
 print('Training time:',total_time)
 print('Test accuracy:', score[1])
+
+#try out random forest
+print('training Random Forst Classifier...') 
+rf = RandomForestClassifier(n_estimators=20, random_state=0)  
+rf.fit(train_data, train_label) 
+acrf = rf.score(train_data, train_label.ravel()) 
+print('Accuracy: '+ str(acrf)) 
