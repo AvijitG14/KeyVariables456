@@ -3,13 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import *
 from sklearn.cross_validation import train_test_split #for sklearn 0.20, grab from sklearn.model_selection
-from sklearn.linear_model import LogisticRegression
 import keras
 import time
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv1D, MaxPooling1D
 from keras import backend as K
+from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 import functools
 
 
@@ -170,6 +172,15 @@ def ExonIntronProcessing(df):
     
     return df
 
+#normalize all the columns in the dataframe
+def normalize(df):
+    result = df.copy()
+    for feature_name in df.columns:
+        max_value = df[feature_name].max()
+        min_value = df[feature_name].min()
+        result[feature_name] = (df[feature_name] - min_value) / (max_value - min_value)
+    return result
+
 #process csv file that we will use for project
 dataframe = pd.read_csv('~/Downloads/clinvar_conflicting.csv')
 row, _ = dataframe.shape
@@ -190,6 +201,8 @@ dataframe.drop(['CLNDISDB','CLNDISDBINCL','CLNDN','CLNDNINCL','CLNHGVS','CLNSIGI
     axis=1,inplace=True)
 
 dataframe.fillna(0,inplace=True)
+#normalize the data frame
+dataframe = normalize(dataframe)
 
 info = [dataframe.iloc[i,:] for i in range(row)]
 final_data = np.array(info)
@@ -202,110 +215,125 @@ fd_y = final_data[:,6:7]
 train_data, test_data, train_label, test_label = train_test_split(fd_x, fd_y, train_size=45000,
                                                     random_state=None, stratify=fd_y)
 
-#Expand dimensions of input data
-#train_data = np.expand_dims(train_data, axis=2)
-#test_data = np.expand_dims(test_data, axis=2)
-
-# convert class vectors to binary class matrices
-#train_label_new = keras.utils.to_categorical(train_label, 2)
-#test_label_new = keras.utils.to_categorical(test_label, 2)
-
+#Logistic Regression Model
 def sigmoid(x):
     return (1/(1+np.exp(-x)))
+#Training Model
+print("---Starting training using Logistic Regression---")
+start_time = time.time()
 
-#logistic regression time
-print("logistic regression")
-'''
-w, h = 30, 45000;
-testing = [[0 for x in range(w)] for y in range(h)] 
-i =0
-for i in range(45000):
-    j=0
-    for j in range(30):
-        testing[i][j]= train_data[i][j][0]
-'''
-
-model = LogisticRegression(random_state=0,solver='liblinear').fit(train_data,train_label.ravel())
-
-print('Train accuracy: ',model.score(train_data,train_label))
-print('Test Accuracy: ',model.score(test_data,test_label))
-
-'''
 m = 45000
+
 alpha= 0.0001
+
 theta_0 = np.zeros((m,1))
 theta_1 = np.zeros((m,1))
 theta_2 = np.zeros((m,1))
 theta_3 = np.zeros((m,1))
 theta_4 = np.zeros((m,1))
-x_1 = train_data[:,0,0]
-x_2 = train_data[:,1,0]
-x_3 = train_data[:,2,0]
-x_4 = train_data[:,3,0]
+theta_5 = np.zeros((m,1))
+theta_6 = np.zeros((m,1))
+
+x_1 = train_data[:,0]
+x_2 = train_data[:,1]
+x_3 = train_data[:,2]
+x_4 = train_data[:,3]
+x_5 = train_data[:,4]
+x_6 = train_data[:,5]
+
 x_1 = np.array(x_1)
 x_2 = np.array(x_2)
 x_3 = np.array(x_3)
 x_4 = np.array(x_4)
+x_5 = np.array(x_5)
+x_6 = np.array(x_6)
 x_1 = x_1.reshape(45000,1)
 x_2 = x_2.reshape(45000,1)
 x_3 = x_3.reshape(45000,1)
 x_4 = x_4.reshape(45000,1)
-#print(x_1)
-#print(x_2)
-#print(theta_1)
-#print(train_data[0][0])
-#print(test_label)
-#train_label = train_label[:,0]
+x_5 = x_5.reshape(45000,1)
+x_6 = x_6.reshape(45000,1)
+
+
 
 epochs = 0
-cost_funct = []
-while(epochs < 10):
-    y = theta_0 + theta_1 * x_1 + theta_2 * x_2 + theta_3 * x_3 + theta_4 * x_4
-    print(y)
-    y = sigmoid(y)
 
+cost_func = []
+
+while(epochs < 800):
+    y = theta_0 + theta_1 * x_1 + theta_2 * x_2 + theta_3 * x_3 + theta_4 * x_4 + theta_5 * x_5 + theta_6 * x_6
+    y = sigmoid(y)    
     cost = (- np.dot(np.transpose(train_label),np.log(y)) - np.dot(np.transpose(1-train_label),np.log(1-y)))/m    
     theta_0_grad = np.dot(np.ones((1,m)),y-train_label)/m
     theta_1_grad = np.dot(np.transpose(x_1),y-train_label)/m
     theta_2_grad = np.dot(np.transpose(x_2),y-train_label)/m
     theta_3_grad = np.dot(np.transpose(x_3),y-train_label)/m
-    theta_4_grad = np.dot(np.transpose(x_4),y-train_label)/m
+    theta_4_grad = np.dot(np.transpose(x_4),y-train_label)/m  
+    theta_5_grad = np.dot(np.transpose(x_5),y-train_label)/m
+    theta_6_grad = np.dot(np.transpose(x_6),y-train_label)/m  
     theta_0 = theta_0 - alpha * theta_0_grad
     theta_1 = theta_1 - alpha * theta_1_grad
     theta_2 = theta_2 - alpha * theta_2_grad
     theta_3 = theta_3 - alpha * theta_3_grad
-    theta_4 = theta_4 - alpha * theta_4_grad
-    cost_funct.append(cost)
+    theta_4 = theta_4 - alpha * theta_4_grad 
+    theta_5 = theta_5 - alpha * theta_5_grad
+    theta_6 = theta_6 - alpha * theta_6_grad 
+    cost_func.append(cost)
     epochs += 1
-print(cost_funct)
-'''
+    
 
-'''
-#Build and compile the CNN model
-#current test accuracy without consq = 74.79%
-#regardless of epoch size or convolution layers
-print('CNN TEST: 32 2-length CONV -> softmax')
-model = Sequential()
-model.add(Conv1D(8, kernel_size=2,
-    activation='sigmoid', input_shape=(train_data.shape[1],1)))
-model.add(Dropout(0.25))
-model.add(Flatten())
-model.add(Dense(2, activation='softmax'))
-model.compile(loss=keras.losses.categorical_crossentropy,
-              optimizer=keras.optimizers.Adadelta(),
-              metrics=['accuracy'])
+#Testing Model
+print("---Testing Model---")
+test_x_1 = test_data[:,0]
+test_x_2 = test_data[:,1]
+test_x_3 = test_data[:,2]
+test_x_4 = test_data[:,3]
+test_x_5 = test_data[:,4]
+test_x_6 = test_data[:,5]
+test_x_1 = np.array(test_x_1)
+test_x_2 = np.array(test_x_2)
+test_x_3 = np.array(test_x_3)
+test_x_4 = np.array(test_x_4)
+test_x_5 = np.array(test_x_5)
+test_x_6 = np.array(test_x_6)
+test_x_1 = test_x_1.reshape(20188,1)
+test_x_2 = test_x_2.reshape(20188,1)
+test_x_3 = test_x_3.reshape(20188,1)
+test_x_4 = test_x_4.reshape(20188,1)
+test_x_5 = test_x_5.reshape(20188,1)
+test_x_6 = test_x_6.reshape(20188,1)
 
-#Test the CNN model and display the run statistics
-start_time = time.time()
-model.fit(train_data, train_label, batch_size=32,
-          epochs=6, verbose=1, validation_data=(test_data, test_label))
-score = model.evaluate(test_data, test_label, verbose=0)
+index = list(range(20188,45000))
+
+theta_0 = np.delete(theta_0, index)
+theta_1 = np.delete(theta_1, index)
+theta_2 = np.delete(theta_2, index)
+theta_3 = np.delete(theta_3, index)
+theta_4 = np.delete(theta_4, index)
+theta_5 = np.delete(theta_5, index)
+theta_6 = np.delete(theta_6, index)
+
+theta_0 = theta_0.reshape(20188,1)
+theta_1 = theta_1.reshape(20188,1)
+theta_2 = theta_2.reshape(20188,1)
+theta_3 = theta_3.reshape(20188,1)
+theta_4 = theta_4.reshape(20188,1)
+theta_5 = theta_5.reshape(20188,1)
+theta_6 = theta_6.reshape(20188,1)
+y_pred = theta_0 + theta_1 * test_x_1 + theta_2 * test_x_2 + theta_3 * test_x_3 + theta_4 * test_x_4 + theta_5 * test_x_5 + theta_6 * test_x_6
+
+y_pred = sigmoid(y_pred)
+
+new_y_pred =[]
+
+for val in y_pred:
+    if(val >= 0.5):
+        new_y_pred.append(1)
+    else:
+        new_y_pred.append(0)
+
+print("Test Accuracy : %3f %%"%(accuracy_score(test_label,new_y_pred)*100))
 end_time = time.time()
 total_time = end_time - start_time
-print('Training time:',total_time)
-print('Test accuracy:', score[1])
-
-for layer in model.layers:
-    w = layer.get_weights()
-    print(w)
-'''
+print('Training time: %3f sec'%total_time)
+print('---Done!---')
