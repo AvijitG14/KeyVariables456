@@ -14,8 +14,8 @@ Mark Tan
 
 # Algorithms Used:
 
-Logistic Regression
-
 Support Vector Machine
 
 Convolution Neural Networking
+
+Random Forest
